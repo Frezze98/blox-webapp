@@ -13,12 +13,10 @@
         }
         h2 { font-size: 16px; color: #a1a1aa; margin: 0 0 15px 0; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Система экранов */
         .screen { display: none; animation: fadeIn 0.2s ease-in-out; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Главное меню */
         .menu-list { display: flex; flex-direction: column; gap: 10px; }
         .menu-item {
             background: #2c2c2e; padding: 16px; border-radius: 12px;
@@ -26,13 +24,11 @@
             font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.1s;
         }
         .menu-item:active { transform: scale(0.97); background: #3a3a3c; }
-        .menu-value { color: #8e8e93; font-size: 14px; font-weight: 400; }
+        .menu-value { color: #8e8e93; font-size: 14px; font-weight: 400; text-align: right; max-width: 50%; }
 
-        /* Сетки для настроек */
         .grid-fruits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .grid-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         
-        /* Карточки фруктов (компактные) */
         .fruit-card {
             position: relative; border-radius: 10px; height: 80px;
             display: flex; align-items: flex-end; justify-content: center; padding: 6px;
@@ -47,7 +43,6 @@
         .fruit-card.selected::after { content: '✅'; position: absolute; top: 4px; right: 4px; z-index: 2; font-size: 12px; }
         .fruit-name { position: relative; z-index: 2; font-weight: 700; font-size: 12px; text-shadow: 1px 1px 2px black; text-align: center; }
 
-        /* Кнопки настроек (Порог, Язык и т.д.) */
         .opt-btn {
             background: #2c2c2e; padding: 15px 5px; border-radius: 10px;
             text-align: center; font-size: 15px; font-weight: 600; border: 2px solid transparent;
@@ -60,22 +55,22 @@
 
     <!-- ЭКРАН 1: ГЛАВНОЕ МЕНЮ -->
     <div id="screen-main" class="screen active">
-        <h2>⚙️ Настройки</h2>
+        <h2 id="t-main">⚙️ Настройки</h2>
         <div class="menu-list">
             <div class="menu-item" onclick="openScreen('screen-wishlist')">
-                <span>🍎 Список желаемого</span>
+                <span id="t-menu-w">🍎 Список желаемого</span>
                 <span class="menu-value" id="val-wishlist">...</span>
             </div>
             <div class="menu-item" onclick="openScreen('screen-threshold')">
-                <span>💰 Порог цены</span>
+                <span id="t-menu-t">💰 Порог цены</span>
                 <span class="menu-value" id="val-threshold">...</span>
             </div>
             <div class="menu-item" onclick="openScreen('screen-type')">
-                <span>📦 Тип стока</span>
+                <span id="t-menu-type">📦 Тип стока</span>
                 <span class="menu-value" id="val-type">...</span>
             </div>
             <div class="menu-item" onclick="openScreen('screen-lang')">
-                <span>🌍 Язык</span>
+                <span id="t-menu-lang">🌍 Язык</span>
                 <span class="menu-value" id="val-lang">...</span>
             </div>
         </div>
@@ -83,25 +78,25 @@
 
     <!-- ЭКРАН 2: СПИСОК ЖЕЛАЕМОГО -->
     <div id="screen-wishlist" class="screen">
-        <h2>Отметьте нужные фрукты</h2>
+        <h2 id="t-wishlist">Отметьте нужные фрукты</h2>
         <div class="grid-fruits" id="fruitsGrid"></div>
     </div>
 
     <!-- ЭКРАН 3: ПОРОГ ЦЕНЫ -->
     <div id="screen-threshold" class="screen">
-        <h2>Выберите порог цены</h2>
+        <h2 id="t-thresh">Выберите порог цены</h2>
         <div class="grid-options" id="thresholdGrid"></div>
     </div>
 
     <!-- ЭКРАН 4: ТИП СТОКА -->
     <div id="screen-type" class="screen">
-        <h2>Выберите тип стока</h2>
+        <h2 id="t-type">Выберите тип стока</h2>
         <div class="grid-options" id="typeGrid"></div>
     </div>
 
     <!-- ЭКРАН 5: ЯЗЫК -->
     <div id="screen-lang" class="screen">
-        <h2>Выберите язык</h2>
+        <h2 id="t-lang">Выберите язык</h2>
         <div class="grid-options" id="langGrid"></div>
     </div>
 
@@ -109,7 +104,6 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Загрузка текущих настроек из URL бота
         const params = new URLSearchParams(window.location.search);
         let state = {
             wishlist: params.get('w') ? params.get('w').split(',') : [],
@@ -117,6 +111,44 @@
             type: params.get('type') || 'both',
             lang: params.get('lang') || 'ru'
         };
+
+        // Словари переводов
+        const dict = {
+            ru: {
+                main: "⚙️ Настройки", m_w: "🍎 Список желаемого", m_t: "💰 Порог цены", m_type: "📦 Тип стока", m_l: "🌍 Язык",
+                h_w: "Отметьте нужные фрукты", h_t: "Выберите порог цены", h_type: "Выберите тип стока", h_l: "Выберите язык",
+                selected: "Выбрано", none: "Ничего", save_close: "СОХРАНИТЬ И ЗАКРЫТЬ",
+                t_all: "Все (0+)", type_both: "Оба стока", type_reg: "Обычный", type_mir: "Мираж"
+            },
+            en: {
+                main: "⚙️ Settings", m_w: "🍎 Wishlist", m_t: "💰 Price Threshold", m_type: "📦 Stock Type", m_l: "🌍 Language",
+                h_w: "Select desired fruits", h_t: "Select price threshold", h_type: "Select stock type", h_l: "Select language",
+                selected: "Selected", none: "None", save_close: "SAVE & CLOSE",
+                t_all: "All (0+)", type_both: "Both Stocks", type_reg: "Regular", type_mir: "Mirage"
+            },
+            uk: {
+                main: "⚙️ Налаштування", m_w: "🍎 Список бажаного", m_t: "💰 Поріг ціни", m_type: "📦 Тип стоку", m_l: "🌍 Мова",
+                h_w: "Відмітьте потрібні фрукти", h_t: "Оберіть поріг ціни", h_type: "Оберіть тип стоку", h_l: "Оберіть мову",
+                selected: "Обрано", none: "Нічого", save_close: "ЗБЕРЕГТИ ТА ЗАКРИТИ",
+                t_all: "Всі (0+)", type_both: "Обидва стоки", type_reg: "Звичайний", type_mir: "Міраж"
+            }
+        };
+
+        function getLang() { return dict[state.lang] || dict['ru']; }
+
+        // Применение перевода к заголовкам
+        function applyTranslations() {
+            const l = getLang();
+            document.getElementById('t-main').innerText = l.main;
+            document.getElementById('t-menu-w').innerText = l.m_w;
+            document.getElementById('t-menu-t').innerText = l.m_t;
+            document.getElementById('t-menu-type').innerText = l.m_type;
+            document.getElementById('t-menu-lang').innerText = l.m_l;
+            document.getElementById('t-wishlist').innerText = l.h_w;
+            document.getElementById('t-thresh').innerText = l.h_t;
+            document.getElementById('t-type').innerText = l.h_type;
+            document.getElementById('t-lang').innerText = l.h_l;
+        }
 
         const fruits = [
             { id: "Kitsune", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/0/07/Kitsune.png" },
@@ -127,23 +159,29 @@
             { id: "Buddha", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/3/3b/Buddha.png" }
         ];
 
-        const thresholds = [
-            { val: 0, text: "Все (0+)" }, { val: 1000000, text: "$1M" }, 
-            { val: 2000000, text: "$2M" }, { val: 3000000, text: "$3M" }, 
-            { val: 5000000, text: "$5M" }, { val: 10000000, text: "$10M" }
-        ];
+        function getThresholds() {
+            const l = getLang();
+            return [
+                { val: 0, text: l.t_all }, { val: 1000000, text: "$1M" }, 
+                { val: 2000000, text: "$2M" }, { val: 3000000, text: "$3M" }, 
+                { val: 5000000, text: "$5M" }, { val: 10000000, text: "$10M" }
+            ];
+        }
 
-        const types = [{ val: "both", text: "Оба стока" }, { val: "regular", text: "Обычный" }, { val: "mirage", text: "Мираж" }];
+        function getTypes() {
+            const l = getLang();
+            return [{ val: "both", text: l.type_both }, { val: "regular", text: l.type_reg }, { val: "mirage", text: l.type_mir }];
+        }
+
         const langs = [{ val: "ru", text: "🇷🇺 Русский" }, { val: "uk", text: "🇺🇦 Українська" }, { val: "en", text: "🇺🇸 English" }];
 
-        // Функция переключения экранов
         function openScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
             if (screenId === 'screen-main') {
                 tg.BackButton.hide();
-                tg.MainButton.setText("СОХРАНИТЬ И ЗАКРЫТЬ");
+                tg.MainButton.setText(getLang().save_close);
                 tg.MainButton.show();
                 updateMainMenuLabels();
             } else {
@@ -152,21 +190,19 @@
             }
         }
 
-        // Обработка кнопки "Назад" самого Телеграма
         tg.BackButton.onClick(() => { openScreen('screen-main'); });
 
-        // Обновление подписей в главном меню
         function updateMainMenuLabels() {
-            document.getElementById('val-wishlist').innerText = state.wishlist.length > 0 ? `Выбрано: ${state.wishlist.length}` : "Ничего";
-            let tObj = thresholds.find(t => t.val === state.threshold);
+            const l = getLang();
+            document.getElementById('val-wishlist').innerText = state.wishlist.length > 0 ? `${l.selected}: ${state.wishlist.length}` : l.none;
+            let tObj = getThresholds().find(t => t.val === state.threshold);
             document.getElementById('val-threshold').innerText = tObj ? tObj.text : state.threshold;
-            let typeObj = types.find(t => t.val === state.type);
+            let typeObj = getTypes().find(t => t.val === state.type);
             document.getElementById('val-type').innerText = typeObj ? typeObj.text : state.type;
-            let lObj = langs.find(l => l.val === state.lang);
+            let lObj = langs.find(lg => lg.val === state.lang);
             document.getElementById('val-lang').innerText = lObj ? lObj.text : state.lang;
         }
 
-        // Отрисовка фруктов
         const fGrid = document.getElementById("fruitsGrid");
         fruits.forEach(f => {
             let card = document.createElement("div");
@@ -181,7 +217,6 @@
             fGrid.appendChild(card);
         });
 
-        // Универсальная функция отрисовки кнопок настроек
         function renderOptions(gridId, dataArray, stateKey) {
             const grid = document.getElementById(gridId);
             grid.innerHTML = '';
@@ -191,20 +226,21 @@
                 btn.innerText = item.text;
                 btn.onclick = () => {
                     state[stateKey] = item.val;
-                    renderOptions(gridId, dataArray, stateKey); // Перерисовка для эффекта нажатия
-                    setTimeout(() => openScreen('screen-main'), 150); // Автоматический возврат в меню
+                    if (stateKey === 'lang') { applyTranslations(); } // Сразу переводим интерфейс при смене языка
+                    renderOptions(gridId, dataArray, stateKey);
+                    setTimeout(() => openScreen('screen-main'), 150);
                 };
                 grid.appendChild(btn);
             });
         }
 
-        // Инициализация
-        renderOptions("thresholdGrid", thresholds, "threshold");
-        renderOptions("typeGrid", types, "type");
+        // Инициализация интерфейса
+        applyTranslations();
+        renderOptions("thresholdGrid", getThresholds(), "threshold");
+        renderOptions("typeGrid", getTypes(), "type");
         renderOptions("langGrid", langs, "lang");
-        openScreen('screen-main'); // Запускаем первый экран
+        openScreen('screen-main');
 
-        // Отправка данных боту
         tg.MainButton.onClick(() => {
             tg.sendData(JSON.stringify({ action: "save_all_settings", state: state }));
         });
