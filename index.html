@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки Blox Fruits</title>
+    <title>Wishlist Фруктов</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { 
@@ -11,64 +11,40 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             margin: 0; padding: 15px 15px 80px 15px; user-select: none;
         }
-        h2 { font-size: 16px; color: #a1a1aa; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .grid-fruits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .grid-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .grid-options-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        h2 { font-size: 16px; color: #a1a1aa; margin: 5px 0 15px 0; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Карточки фруктов */
+        /* Компактная сетка: 3 колонки */
+        .grid-fruits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        
         .fruit-card {
-            position: relative; border-radius: 12px; height: 100px;
-            display: flex; align-items: flex-end; justify-content: center; padding: 10px;
+            position: relative; border-radius: 10px; height: 80px;
+            display: flex; align-items: flex-end; justify-content: center; padding: 6px;
             background-size: cover; background-position: center; border: 2px solid transparent;
             transition: 0.1s; cursor: pointer; overflow: hidden;
         }
         .fruit-card::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 60%); z-index: 1;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 70%); z-index: 1;
         }
-        .fruit-card.selected { border-color: #0a84ff; transform: scale(0.96); }
-        .fruit-card.selected::after { content: '✅'; position: absolute; top: 6px; right: 6px; z-index: 2; font-size: 14px; }
-        .fruit-name { position: relative; z-index: 2; font-weight: 800; font-size: 14px; text-shadow: 1px 1px 3px black; }
-
-        /* Обычные кнопки настроек */
-        .opt-btn {
-            background: #2c2c2e; border: 2px solid transparent; border-radius: 10px;
-            padding: 12px 5px; text-align: center; font-size: 14px; font-weight: 600;
-            transition: 0.1s; cursor: pointer;
-        }
-        .opt-btn.active { background: #0a84ff; color: white; border-color: #0a84ff; transform: scale(0.96); }
+        .fruit-card.selected { border-color: #0a84ff; transform: scale(0.95); }
+        .fruit-card.selected::after { content: '✅'; position: absolute; top: 4px; right: 4px; z-index: 2; font-size: 12px; }
+        .fruit-name { position: relative; z-index: 2; font-weight: 700; font-size: 12px; text-shadow: 1px 1px 2px black; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h2>🍎 Список желаемого</h2>
+    <h2>🍎 Отметьте нужные фрукты</h2>
     <div class="grid-fruits" id="fruitsGrid"></div>
-
-    <h2>💰 Порог цены</h2>
-    <div class="grid-options-3" id="thresholdGrid"></div>
-
-    <h2>📦 Тип стока</h2>
-    <div class="grid-options" id="typeGrid"></div>
-
-    <h2>🌍 Язык</h2>
-    <div class="grid-options-3" id="langGrid"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Читаем текущие настройки пользователя, которые передал бот через URL
         const params = new URLSearchParams(window.location.search);
-        let state = {
-            wishlist: params.get('w') ? params.get('w').split(',') : [],
-            threshold: parseInt(params.get('t') || '0'),
-            type: params.get('type') || 'both',
-            lang: params.get('lang') || 'ru'
-        };
+        let wishlist = params.get('w') ? params.get('w').split(',') : [];
 
         const fruits = [
-            { id: "Kitsune", image: "https://static.wikia.nocookie.net/roblox-blox-piece/images/6/65/Kitsune_Fruit.png/revision/latest?cb=20241223162956" },
+            { id: "Kitsune", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/0/07/Kitsune.png" },
             { id: "Dragon", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/3/30/Dragon.png" },
             { id: "Leopard", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/3/39/Leopard.png" },
             { id: "Dough", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/1/14/Dough.png" },
@@ -76,65 +52,25 @@
             { id: "Buddha", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/3/3b/Buddha.png" }
         ];
 
-        const thresholds = [
-            { val: 0, text: "Все (0+)" }, { val: 1000000, text: "$1M" }, 
-            { val: 2000000, text: "$2M" }, { val: 3000000, text: "$3M" }, 
-            { val: 5000000, text: "$5M" }, { val: 10000000, text: "$10M" }
-        ];
-
-        const types = [
-            { val: "both", text: "Оба стока" }, { val: "regular", text: "Обычный" }, { val: "mirage", text: "Мираж" }
-        ];
-
-        const langs = [
-            { val: "ru", text: "🇷🇺 RU" }, { val: "uk", text: "🇺🇦 UK" }, { val: "en", text: "🇺🇸 EN" }
-        ];
-
-        function checkChanges() {
-            tg.MainButton.setText("СОХРАНИТЬ НАСТРОЙКИ");
-            tg.MainButton.show();
-        }
-
-        // Рендер фруктов
         const fGrid = document.getElementById("fruitsGrid");
         fruits.forEach(f => {
             let card = document.createElement("div");
-            card.className = "fruit-card" + (state.wishlist.includes(f.id) ? " selected" : "");
+            card.className = "fruit-card" + (wishlist.includes(f.id) ? " selected" : "");
             card.style.backgroundImage = `url('${f.image}')`;
             card.innerHTML = `<div class="fruit-name">${f.id}</div>`;
             card.onclick = () => {
                 card.classList.toggle("selected");
-                if (state.wishlist.includes(f.id)) state.wishlist = state.wishlist.filter(i => i !== f.id);
-                else state.wishlist.push(f.id);
-                checkChanges();
+                if (wishlist.includes(f.id)) wishlist = wishlist.filter(i => i !== f.id);
+                else wishlist.push(f.id);
+                
+                tg.MainButton.setText(`СОХРАНИТЬ (${wishlist.length})`);
+                tg.MainButton.show();
             };
             fGrid.appendChild(card);
         });
 
-        // Функция генерации кнопок настроек
-        function renderOptions(gridId, dataArray, stateKey) {
-            const grid = document.getElementById(gridId);
-            grid.innerHTML = '';
-            dataArray.forEach(item => {
-                let btn = document.createElement("div");
-                btn.className = "opt-btn" + (state[stateKey] === item.val ? " active" : "");
-                btn.innerText = item.text;
-                btn.onclick = () => {
-                    state[stateKey] = item.val;
-                    renderOptions(gridId, dataArray, stateKey); // Перерисовываем для обновления класса active
-                    checkChanges();
-                };
-                grid.appendChild(btn);
-            });
-        }
-
-        renderOptions("thresholdGrid", thresholds, "threshold");
-        renderOptions("typeGrid", types, "type");
-        renderOptions("langGrid", langs, "lang");
-
-        // Отправка всего массива настроек при нажатии "Сохранить"
         tg.MainButton.onClick(() => {
-            tg.sendData(JSON.stringify({ action: "save_all_settings", state: state }));
+            tg.sendData(JSON.stringify({ action: "save_fruits", list: wishlist }));
         });
     </script>
 </body>
