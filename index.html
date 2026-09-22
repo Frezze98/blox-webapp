@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wishlist Фруктов</title>
-    <!-- Обязательный скрипт для связи с Телеграмом -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { 
@@ -17,22 +16,56 @@
         }
         h2 { text-align: center; margin-bottom: 20px; font-size: 18px; color: #f2f2f7; }
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        
         .fruit-card {
-            background: #2c2c2e; 
-            border-radius: 12px; 
-            padding: 15px; 
-            text-align: center;
-            border: 2px solid transparent; 
-            transition: all 0.2s ease-in-out; 
+            position: relative;
+            border-radius: 12px;
+            height: 110px; /* Высота кнопки */
+            display: flex;
+            align-items: flex-end; /* Опускаем текст вниз */
+            justify-content: center;
+            padding: 10px;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
             cursor: pointer;
+            overflow: hidden;
         }
+
+        /* Темный градиент поверх картинки, чтобы текст всегда читался */
+        .fruit-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 60%);
+            z-index: 1;
+        }
+
+        /* Анимация при выборе */
         .fruit-card.selected { 
             border-color: #0a84ff; 
-            background: #3a3a3c; 
-            transform: scale(0.97);
+            transform: scale(0.95);
         }
-        .fruit-icon { font-size: 36px; margin-bottom: 8px; }
-        .fruit-name { font-weight: bold; font-size: 15px; }
+
+        /* Галочка при выборе */
+        .fruit-card.selected::after {
+            content: '✅';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 2;
+            font-size: 16px;
+        }
+
+        .fruit-name { 
+            position: relative;
+            z-index: 2; /* Текст поверх затемнения */
+            font-weight: 800; 
+            font-size: 15px; 
+            text-shadow: 1px 1px 4px black; /* Дополнительная обводка текста */
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -42,30 +75,30 @@
     </div>
 
     <script>
-        // Инициализация Telegram Web App
         let tg = window.Telegram.WebApp;
-        tg.expand(); // Открываем приложение почти на весь экран
+        tg.expand();
 
-        // Наш стартовый список фруктов (пока со смайликами, потом легко заменишь на <img src="... ">)
+        // Сюда ты можешь вставлять прямые ссылки на картинки фруктов из интернета
+        // Или закинуть файлы картинок на GitHub и написать просто image: "kitsune.png"
         const fruits = [
-            { id: "Kitsune", icon: "🦊" },
-            { id: "Dragon", icon: "🐉" },
-            { id: "Leopard", icon: "🐆" },
-            { id: "Dough", icon: "🍩" },
-            { id: "T-Rex", icon: "🦖" },
-            { id: "Buddha", icon: "🌕" }
+            { id: "Kitsune", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/0/07/Kitsune.png" },
+            { id: "Dragon", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/3/30/Dragon.png" },
+            { id: "Leopard", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/3/39/Leopard.png" },
+            { id: "Dough", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/1/14/Dough.png" },
+            { id: "T-Rex", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/b/b8/T-Rex.png" },
+            { id: "Buddha", image: "https://static.wikia.nocookie.net/roblox-blox-pieces/images/3/3b/Buddha.png" }
         ];
 
         let selectedFruits = [];
         const grid = document.getElementById("fruitsGrid");
 
-        // Отрисовка карточек
         fruits.forEach(f => {
             let card = document.createElement("div");
             card.className = "fruit-card";
-            card.innerHTML = `<div class="fruit-icon">${f.icon}</div><div class="fruit-name">${f.id}</div>`;
+            // Устанавливаем картинку фоном
+            card.style.backgroundImage = `url('${f.image}')`;
+            card.innerHTML = `<div class="fruit-name">${f.id}</div>`;
             
-            // Логика нажатия на карточку
             card.onclick = () => {
                 card.classList.toggle("selected");
                 if (selectedFruits.includes(f.id)) {
@@ -74,7 +107,6 @@
                     selectedFruits.push(f.id);
                 }
                 
-                // Управление главной кнопкой внизу экрана
                 if (selectedFruits.length > 0) {
                     tg.MainButton.setText(`СОХРАНИТЬ (${selectedFruits.length})`);
                     tg.MainButton.show();
@@ -85,7 +117,6 @@
             grid.appendChild(card);
         });
 
-        // Отправка данных обратно в бота при нажатии "Сохранить"
         tg.MainButton.onClick(() => {
             tg.sendData(JSON.stringify({ action: "save_fruits", list: selectedFruits }));
         });
